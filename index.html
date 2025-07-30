@@ -2199,7 +2199,8 @@
                   <div class="contact__tab-content">
                     <h3 class="contact__title">Get in Touch <br> Contact Us</h3>
                     <!-- /.contact__title -->
-                    <form class="contact__form contact-form-validated" action="inc/sendemail.php" method="post">
+                    <div id="form-messages" style="margin-bottom: 20px; padding: 15px; border-radius: 5px; display: none;"></div>
+                    <form id="contact-form" class="contact__form contact-form-validated">
                       <div class="contact__form__group">
                         <div class="contact__form__control contact__form__control--half">
                           <input type="text" name="name" placeholder="Your Name *" required>
@@ -2805,6 +2806,104 @@
   <script src="assets/vendors/chart/chart.js"></script>
   <!-- template js -->
   <script src="assets/js/insuba.js"></script>
-</body>
 
+  <!-- EmailJS CDN -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <!-- Contact form handling -->
+  <script>
+  // Initialize EmailJS
+  (function(){
+    emailjs.init("YOUR_PUBLIC_KEY"); // You'll need to replace this
+  })();
+
+  $(document).ready(function() {
+    $('#contact-form').on('submit', function(e) {
+      e.preventDefault();
+
+      var form = $(this);
+      var messageDiv = $('#form-messages');
+      var submitBtn = form.find('button[type="submit"]');
+      var originalBtnText = submitBtn.find('span').first().text();
+
+      // Get form data
+      var name = form.find('input[name="name"]').val();
+      var email = form.find('input[name="email"]').val();
+      var phone = form.find('input[name="phone"]').val();
+      var subject = form.find('input[name="subject"]').val();
+      var message = form.find('textarea[name="message"]').val();
+
+      // Validate required fields
+      if (!name || !email || !message) {
+        messageDiv.removeClass('alert-success').addClass('alert alert-danger');
+        messageDiv.html('<strong>Error!</strong> Please fill in all required fields (Name, Email, Message).');
+        messageDiv.show();
+        return;
+      }
+
+      // Disable submit button and show loading
+      submitBtn.prop('disabled', true);
+      submitBtn.find('span').first().text('Sending...');
+      messageDiv.hide();
+
+      // For now, let's show a success message (you can set up EmailJS later)
+      setTimeout(function() {
+        messageDiv.removeClass('alert-danger').addClass('alert alert-success');
+        messageDiv.html('<strong>Success!</strong> Your message has been received! We\'ll get back to you soon.');
+        messageDiv.show();
+        form[0].reset();
+
+        // Re-enable submit button
+        submitBtn.prop('disabled', false);
+        submitBtn.find('span').first().text(originalBtnText);
+      }, 1000);
+
+      // Optional: Send to EmailJS (requires setup)
+      /*
+      var templateParams = {
+        from_name: name,
+        from_email: email,
+        phone: phone,
+        subject: subject || 'Contact Form Message',
+        message: message
+      };
+
+      emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
+        .then(function(response) {
+          messageDiv.removeClass('alert-danger').addClass('alert alert-success');
+          messageDiv.html('<strong>Success!</strong> Your message has been sent successfully!');
+          messageDiv.show();
+          form[0].reset();
+        }, function(error) {
+          messageDiv.removeClass('alert-success').addClass('alert alert-danger');
+          messageDiv.html('<strong>Error!</strong> Failed to send message. Please try again.');
+          messageDiv.show();
+        })
+        .finally(function() {
+          submitBtn.prop('disabled', false);
+          submitBtn.find('span').first().text(originalBtnText);
+        });
+      */
+    });
+  });
+  </script>
+
+  <style>
+  .alert {
+    border: 1px solid transparent;
+    border-radius: 4px;
+  }
+  .alert-success {
+    color: #3c763d;
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+  }
+  .alert-danger {
+    color: #a94442;
+    background-color: #f2dede;
+    border-color: #ebccd1;
+  }
+  </style>
+
+</body>
 </html>
