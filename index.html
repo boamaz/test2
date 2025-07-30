@@ -2810,11 +2810,11 @@
   <!-- EmailJS CDN -->
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
-  <!-- Contact form handling -->
+  <!-- Contact form handling with EmailJS -->
   <script>
   // Initialize EmailJS
   (function(){
-    emailjs.init("YOUR_PUBLIC_KEY"); // You'll need to replace this
+    emailjs.init("jGUONaLIJ8D9AudNu"); // EmailJS public key
   })();
 
   $(document).ready(function() {
@@ -2827,16 +2827,25 @@
       var originalBtnText = submitBtn.find('span').first().text();
 
       // Get form data
-      var name = form.find('input[name="name"]').val();
-      var email = form.find('input[name="email"]').val();
-      var phone = form.find('input[name="phone"]').val();
-      var subject = form.find('input[name="subject"]').val();
-      var message = form.find('textarea[name="message"]').val();
+      var name = form.find('input[name="name"]').val().trim();
+      var email = form.find('input[name="email"]').val().trim();
+      var phone = form.find('input[name="phone"]').val().trim();
+      var subject = form.find('input[name="subject"]').val().trim() || 'Contact Form Message';
+      var message = form.find('textarea[name="message"]').val().trim();
 
       // Validate required fields
       if (!name || !email || !message) {
         messageDiv.removeClass('alert-success').addClass('alert alert-danger');
-        messageDiv.html('<strong>Error!</strong> Please fill in all required fields (Name, Email, Message).');
+        messageDiv.html('<strong>Error!</strong> Please fill in all required fields: Name, Email, and Message.');
+        messageDiv.show();
+        return;
+      }
+
+      // Validate email format
+      var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        messageDiv.removeClass('alert-success').addClass('alert alert-danger');
+        messageDiv.html('<strong>Error!</strong> Please enter a valid email address.');
         messageDiv.show();
         return;
       }
@@ -2846,44 +2855,36 @@
       submitBtn.find('span').first().text('Sending...');
       messageDiv.hide();
 
-      // For now, let's show a success message (you can set up EmailJS later)
-      setTimeout(function() {
-        messageDiv.removeClass('alert-danger').addClass('alert alert-success');
-        messageDiv.html('<strong>Success!</strong> Your message has been received! We\'ll get back to you soon.');
-        messageDiv.show();
-        form[0].reset();
-
-        // Re-enable submit button
-        submitBtn.prop('disabled', false);
-        submitBtn.find('span').first().text(originalBtnText);
-      }, 1000);
-
-      // Optional: Send to EmailJS (requires setup)
-      /*
+      // Prepare email template parameters
       var templateParams = {
         from_name: name,
         from_email: email,
-        phone: phone,
-        subject: subject || 'Contact Form Message',
-        message: message
+        phone: phone || 'Not provided',
+        subject: subject,
+        message: message,
+        to_email: 'realgamers654@gmail.com'
       };
 
-      emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
+      // Send email using EmailJS
+      emailjs.send('service_5kl1mqi', 'template_3x4vk7s', templateParams)
         .then(function(response) {
+          console.log('Email sent successfully!', response);
           messageDiv.removeClass('alert-danger').addClass('alert alert-success');
-          messageDiv.html('<strong>Success!</strong> Your message has been sent successfully!');
+          messageDiv.html('<strong>Success!</strong> Thank you ' + name + '! Your message has been sent to realgamers654@gmail.com successfully.');
           messageDiv.show();
           form[0].reset();
-        }, function(error) {
+        })
+        .catch(function(error) {
+          console.error('EmailJS Error:', error);
           messageDiv.removeClass('alert-success').addClass('alert alert-danger');
-          messageDiv.html('<strong>Error!</strong> Failed to send message. Please try again.');
+          messageDiv.html('<strong>Error!</strong> Failed to send email. Please try again or contact realgamers654@gmail.com directly.');
           messageDiv.show();
         })
         .finally(function() {
+          // Re-enable submit button
           submitBtn.prop('disabled', false);
           submitBtn.find('span').first().text(originalBtnText);
         });
-      */
     });
   });
   </script>
