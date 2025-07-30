@@ -1,13 +1,5 @@
 <?php
-// Include configuration
-require_once 'config.php';
-
 header('Content-Type: application/json');
-
-// Get configuration values
-$to_email = TO_EMAIL;
-$from_email = FROM_EMAIL;
-$subject_prefix = SUBJECT_PREFIX;
 
 // Response array
 $response = array();
@@ -39,41 +31,67 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $errors[] = "Message is required.";
     }
     
-    // If no errors, send email
+    // If no errors, save to file
     if (empty($errors)) {
         
-        // Create email content
-        $email_subject = $subject_prefix . $subject;
+        // Create contact data array
+        $contact_data = array(
+            'timestamp' => date('Y-m-d H:i:s'),
+            'name' => $name,
+            'email' => $email,
+            'phone' => $phone,
+            'subject' => $subject,
+            'message' => $message,
+            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'Unknown'
+        );
         
-        $email_body = "You have received a new message from your website contact form.\n\n";
-        $email_body .= "Here are the details:\n\n";
-        $email_body .= "Name: " . $name . "\n";
-        $email_body .= "Email: " . $email . "\n";
+        // Prepare data for file
+        $file_content = "\n" . str_repeat("=", 50) . "\n";
+        $file_content .= "NEW CONTACT FORM SUBMISSION\n";
+        $file_content .= "Date: " . $contact_data['timestamp'] . "\n";
+        $file_content .= str_repeat("-", 50) . "\n";
+        $file_content .= "Name: " . $contact_data['name'] . "\n";
+        $file_content .= "Email: " . $contact_data['email'] . "\n";
         
-        if (!empty($phone)) {
-            $email_body .= "Phone: " . $phone . "\n";
+        if (!empty($contact_data['phone'])) {
+            $file_content .= "Phone: " . $contact_data['phone'] . "\n";
         }
         
-        $email_body .= "Subject: " . $subject . "\n\n";
-        $email_body .= "Message:\n" . $message . "\n\n";
-        $email_body .= "---\n";
-        $email_body .= "This email was sent from your website contact form.";
+        $file_content .= "Subject: " . $contact_data['subject'] . "\n";
+        $file_content .= "IP Address: " . $contact_data['ip_address'] . "\n\n";
+        $file_content .= "Message:\n" . $contact_data['message'] . "\n";
+        $file_content .= str_repeat("=", 50) . "\n";
         
-        // Email headers
-        $headers = array();
-        $headers[] = "MIME-Version: 1.0";
-        $headers[] = "Content-type: text/plain; charset=UTF-8";
-        $headers[] = "From: " . $name . " <" . $from_email . ">";
-        $headers[] = "Reply-To: " . $email;
-        $headers[] = "X-Mailer: PHP/" . phpversion();
+        // Save to file
+        $filename = 'contact_submissions.txt';
+        $file_path = __DIR__ . '/' . $filename;
         
-        // Send email
-        if (mail($to_email, $email_subject, $email_body, implode("\r\n", $headers))) {
+        // Try to save to file
+        if (file_put_contents($file_path, $file_content, FILE_APPEND | LOCK_EX) !== false) {
+            
+            // Also save as JSON for easy reading
+            $json_filename = 'contact_submissions.json';
+            $json_file_path = __DIR__ . '/' . $json_filename;
+            
+            // Read existing JSON data
+            $existing_data = array();
+            if (file_exists($json_file_path)) {
+                $existing_json = file_get_contents($json_file_path);
+                $existing_data = json_decode($existing_json, true) ?: array();
+            }
+            
+            // Add new submission
+            $existing_data[] = $contact_data;
+            
+            // Save updated JSON
+            file_put_contents($json_file_path, json_encode($existing_data, JSON_PRETTY_PRINT));
+            
             $response['success'] = true;
-            $response['message'] = "Thank you! Your message has been sent successfully.";
+            $response['message'] = "Thank you " . $name . "! Your message has been received successfully. We will contact you at " . $email . " soon.";
+            
         } else {
             $response['success'] = false;
-            $response['message'] = "Sorry, there was an error sending your message. Please try again later.";
+            $response['message'] = "Sorry, there was an error saving your message. Please try again later.";
         }
         
     } else {
